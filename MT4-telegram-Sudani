@@ -1,0 +1,53 @@
+//+------------------------------------------------------------------+
+//|                   Telegram Profit/Loss Script                   |
+//+------------------------------------------------------------------+
+#property strict
+
+// Telegram Bot Data
+string botToken = "YOUR_BOT_API_TOKEN"; // Replace with your Bot's API Token
+string chatID = "YOUR_CHAT_ID"; // Replace with your Chat ID (channel or group)
+
+// Function to send messages to Telegram
+void SendTelegramMessage(string message) {
+   string url = "https://api.telegram.org/bot" + botToken + "/sendMessage?chat_id=" + chatID + "&text=" + message;
+   int timeout = 10; // Timeout duration
+   char result[];
+   int response = WebRequest("GET", url, NULL, NULL, 0, result, timeout, NULL);
+   
+   if(response == -1) {
+      Print("Error sending message to Telegram: ", GetLastError());
+   } else {
+      Print("Message sent successfully: ", message);
+   }
+}
+
+// Function to check trade status
+void CheckTradeStatus() {
+   int totalOrders = OrdersTotal();
+   for (int i = 0; i < totalOrders; i++) {
+      if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {
+         double profit = OrderProfit(); // Trade profit
+         string symbol = OrderSymbol(); // Trading pair (e.g., USD/TRY)
+         string message;
+         
+         // Get current time
+         string time = TimeToString(TimeCurrent(), TIME_DATE | TIME_MINUTES); // Current time (date + hours + minutes)
+
+         if (profit > 0) {
+            // If the trade is profitable
+            message = "✅ Trade WIN\nPair: " + symbol + "\nProfit: " + DoubleToString(profit, 2) + " USD\nTime: " + time + "\nMISTER SUDANI";
+         } else if (profit < 0) {
+            // If the trade is a loss
+            message = "❌ Trade LOSS\nPair: " + symbol + "\nLoss: " + DoubleToString(profit, 2) + " USD\nTime: " + time + "\nMISTER SUDANI";
+         } else {
+            // If there is no profit or loss
+            message = "⚠️ Trade CLOSED (No Profit/Loss)\nPair: " + symbol + "\nTime: " + time + "\nMISTER SUDANI";
+         }
+         
+         // Send the message to Telegram
+         SendTelegramMessage(message);
+      }
+   }
+}
+
+// Start
